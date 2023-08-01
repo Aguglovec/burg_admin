@@ -1,6 +1,9 @@
-export function drawSnake (ctx : CanvasRenderingContext2D, snake :number[][]) {
-	ctx.fillStyle = "#a3d001"
-	snake.forEach(([ x, y ]) => ctx.fillRect(x, y, 1, 1))
+import { snakeColor } from "../../gameConfig";
+import { coordinate2D } from "../../types/types";
+
+export function drawSnake (ctx : CanvasRenderingContext2D, snake :coordinate2D[]) {
+	ctx.fillStyle = snakeColor;
+	snake.forEach((segment) => ctx.fillRect(segment.x, segment.y, 1, 1));
 
 }
 

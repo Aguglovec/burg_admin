@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Game.css";
 import {useInterval} from "./modules/hooks/useInterval";
-import {canvasX, canvasY, scale, timeDelay} from "./gameConfig";
+import {boardColor, canvasX, canvasY, scale, timeDelay} from "./gameConfig";
 import {drawSnake} from "./modules/Snake/Snake";
 import {drawApple} from "./modules/Apple/Apple";
-
+import { coordinate2D } from "./types/types";
 
 
 function Game() {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const [ snake, setSnake ] = useState([randomCoord(canvasX, canvasY, scale)]);
 	const [ apple, setApple ] = useState(randomCoord(canvasX, canvasY, scale));
-	const [ direction, setDirection ] = useState([ 0, -1 ]);
+	const [ direction, setDirection ] = useState<coordinate2D>({x : 1, y : 0});
 	const [ delay, setDelay ] = useState<number | null>(null);
 	const [ gameOver, setGameOver ] = useState(false);
 	const [ arrowPressed, setArrowPressed ] = useState(false);
@@ -26,7 +26,7 @@ function Game() {
 				if (ctx) {
 					ctx.setTransform(scale, 0, 0, scale, 0, 0);
 					ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-					ctx.fillStyle = "#a3d001";
+					ctx.fillStyle = boardColor;
 					drawSnake (ctx, snake);
 					drawApple (ctx, apple);
 					setArrowPressed(false);
@@ -39,29 +39,29 @@ function Game() {
 	function play() {
 		setSnake([randomCoord(canvasX, canvasY, scale)]);
 		setApple(randomCoord(canvasX, canvasY, scale));
-		setDirection([ 1, 0 ]);
+		setDirection({x : 1, y : 0});
 		setDelay(timeDelay);
 		setGameOver(false);
 	}
 
-	function checkCollision(head: number[]) {
-		for (let i = 0; i < head.length; i++) {
-			if (head[i] < 0 || head[i] * scale >= canvasX) return true
-		}
-		for (const s of snake) {
-			if (head[0] === s[0] && head[1] === s[1]) return true
+	function checkCollision (head: coordinate2D) {
+		if (head.x < 0 || head.x * scale >= canvasX) return true
+		if (head.y < 0 || head.y * scale >= canvasY) return true
+		
+		for (const segment of snake) {
+			if (head.x === segment.x && head.y === segment.y) return true
 		}
 		return false
 	}
 
 	function randomCoord (canvasX:number, canvasY:number, scale:number) {
-		let coord = [Math.floor(Math.random() * canvasX / scale), Math.floor(Math.random() * canvasY / scale)];
+		let coord : coordinate2D = { x:Math.floor(Math.random() * canvasX / scale), y:Math.floor(Math.random() * canvasY / scale)};
 		return coord
 	}
 
 
-	function appleEaten(newSnake: number[][]) {
-		if (newSnake[0][0] === apple[0] && newSnake[0][1] === apple[1]) {
+	function appleEaten(snakeHead: coordinate2D) {
+		if (snakeHead.x === apple.x && snakeHead.y === apple.y) {
 			setApple(randomCoord(canvasX, canvasY, scale));
 			return true
 		}
@@ -70,13 +70,13 @@ function Game() {
 
 	function runGame() {
 		const newSnake = [ ...snake ];
-		const newSnakeHead = [ newSnake[0][0] + direction[0], newSnake[0][1] + direction[1] ];
+		const newSnakeHead : coordinate2D = { x:newSnake[0].x + direction.x, y:newSnake[0].y + direction.y };
 		newSnake.unshift(newSnakeHead);
 		if (checkCollision(newSnakeHead)) {
 			setDelay(null);
 			setGameOver(true);
 		}
-		if (!appleEaten(newSnake)) {
+		if (!appleEaten(newSnakeHead)) {
 			newSnake.pop();
 		}
 		setSnake(newSnake);
@@ -86,16 +86,16 @@ function Game() {
 		if (!arrowPressed) {
 			switch (e.key) {
 				case "ArrowLeft":
-					if (direction[0] != 1) setDirection([ -1, 0 ]);
+					if (direction.x != 1) setDirection({x : -1, y : 0});
 					break
 				case "ArrowUp":
-					if (direction[1] != 1) setDirection([ 0, -1 ]);
+					if (direction.y != 1) setDirection({x : 0, y : -1});
 					break
 				case "ArrowRight":
-					if (direction[0] != -1) setDirection([ 1, 0 ]);
+					if (direction.x != -1) setDirection({x : 1, y : 0});
 					break
 				case "ArrowDown":
-					if (direction[1] != -1) setDirection([ 0, 1 ]);
+					if (direction.y != -1) setDirection({x : 0, y : 1});
 					break
 			}
 			setArrowPressed(true);
